@@ -1,0 +1,33 @@
+services:
+  auth:
+    build:
+      context: .
+      dockerfile: ./apps/auth/Dockerfile
+      target: development
+    command: npm run start:dev auth
+    ports:
+      - '3000:3000'
+    env_file:
+      - ./apps/auth/.env
+    depends_on:
+      - postgres-users
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - '5672:5672'
+  postgres-users:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: hw4_users
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - "5001:5432"
+    volumes:
+      - ./docker_postgres_init.sql
+    restart: always
