@@ -15,6 +15,23 @@ services:
       - /usr/src/app/node_modules
     ports:
       - '3000:3000'
+  profiles:
+    build:
+      context: .
+      dockerfile: ./apps/profile/Dockerfile
+      target: development
+    command: npm run start:dev profile
+    env_file:
+      - ./apps/profile/.env
+    depends_on:
+      - postgres-profiles
+      - auth
+      - rabbitmq
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - '3001:3001'
   rabbitmq:
     image: rabbitmq
     ports:
@@ -30,4 +47,14 @@ services:
       - "5001:5432"
     volumes:
       - ./docker_postgres_init.sql:/docker-entrypoint initdb.d/docker_postgres_init.sql
+    restart: always
+  postgres-profiles:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: hw4_profiles
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - "5002:5432"
     restart: always

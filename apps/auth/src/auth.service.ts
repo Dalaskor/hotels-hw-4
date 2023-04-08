@@ -1,6 +1,7 @@
 import {
     HttpException,
     HttpStatus,
+    Inject,
     Injectable,
     UnauthorizedException,
 } from '@nestjs/common';
@@ -9,6 +10,9 @@ import { CreateUserDto } from './users/dto/create-user.dto';
 import { UsersService } from './users/users.service';
 import * as bcrypt from 'bcryptjs';
 import { User } from './users/users.model';
+import { lastValueFrom } from 'rxjs';
+import { PROFILES_SERVICE } from '../constants/services';
+import { ClientProxy } from '@nestjs/microservices';
 
 export interface TokenPayload {
     id: number;
@@ -20,6 +24,7 @@ export class AuthService {
     constructor(
         private readonly userService: UsersService,
         private readonly jwtService: JwtService,
+        @Inject(PROFILES_SERVICE) private profileClient: ClientProxy,
     ) {}
 
     async login(dto: CreateUserDto) {
@@ -42,6 +47,10 @@ export class AuthService {
             email: dto.email,
             password: hashPassword,
         });
+
+        await lastValueFrom(
+            this.profileClient.emit('user-created', { user_id: user.id }),
+        );
 
         return await this.generateToken(user);
     }

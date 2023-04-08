@@ -6,6 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { RmqModule } from '@app/common';
 import { UserModule } from './users/users.module';
 import { AuthController } from './auth.controller';
+import { PROFILES_SERVICE } from '../constants/services';
 
 @Module({
     imports: [
@@ -31,6 +32,7 @@ import { AuthController } from './auth.controller';
             inject: [ConfigService],
         }),
         RmqModule,
+        RmqModule.register({ name: PROFILES_SERVICE }),
         UserModule,
     ],
     controllers: [AuthController],
