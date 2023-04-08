@@ -1,42 +1,72 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import {
+    HttpException,
+    HttpStatus,
+    Injectable,
+    UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Response } from 'express';
+import { CreateUserDto } from './users/dto/create-user.dto';
+import { UsersService } from './users/users.service';
+import * as bcrypt from 'bcryptjs';
 import { User } from './users/users.model';
 
 export interface TokenPayload {
-    userId: string;
+    id: number;
+    email: string;
 }
 
 @Injectable()
 export class AuthService {
     constructor(
-        private readonly configService: ConfigService,
+        private readonly userService: UsersService,
         private readonly jwtService: JwtService,
     ) {}
 
-    async login(user: User, response: Response) {
-        const tokenPayload: TokenPayload = {
-            userId: user.id.toString(),
-        };
+    async login(dto: CreateUserDto) {
+        const user = await this.validateUser(dto);
+        return await this.generateToken(user);
+    }
 
-        const expires = new Date();
-        expires.setSeconds(
-            expires.getSeconds() + this.configService.get('JWT_EXPIRATION'),
+    async registration(dto: CreateUserDto) {
+        const candidate = await this.userService.getUserByEmail(dto.email);
+
+        if (candidate) {
+            throw new HttpException(
+                'Пользователь с такой электронной почтой уже существует',
+                HttpStatus.BAD_REQUEST,
+            );
+        }
+
+        const hashPassword = await bcrypt.hash(dto.password, 5);
+        const user = await this.userService.createUser({
+            email: dto.email,
+            password: hashPassword,
+        });
+
+        return await this.generateToken(user);
+    }
+
+    private async validateUser(dto: CreateUserDto) {
+        const user = await this.userService.getUserByEmail(dto.email);
+        const passwordEquals = await bcrypt.compare(
+            dto.password,
+            user.password,
         );
 
-        const token = this.jwtService.sign(tokenPayload);
+        if (user && passwordEquals) {
+            return user;
+        }
 
-        response.cookie('Authentication', token, {
-            httpOnly: true,
-            expires,
+        throw new UnauthorizedException({
+            message: 'Неккоректные электронная почта или пароль',
         });
     }
 
-    logout(response: Response) {
-        response.cookie('Authentication', '', {
-            httpOnly: true,
-            expires: new Date(),
-        });
+    private async generateToken(user: User) {
+        const payload: TokenPayload = { id: user.id, email: user.email };
+
+        return {
+            token: this.jwtService.sign(payload),
+        };
     }
 }
