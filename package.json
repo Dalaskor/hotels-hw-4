@@ -26,6 +26,7 @@
     "@nestjs/microservices": "^9.4.0",
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/sequelize": "^9.0.2",
+    "cookie-parser": "^1.4.6",
     "pg": "^8.10.0",
     "pg-hstore": "^2.3.4",
     "reflect-metadata": "^0.1.13",
