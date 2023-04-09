@@ -27,7 +27,10 @@ export class ProfileService {
     }
 
     async getOneByPk(id: number) {
-        const profile = await this.profilesRepository.findByPk(id);
+        // const profile = await this.profilesRepository.findByPk(id);
+        const profile = await this.profilesRepository.findOne({
+            where: { id },
+        });
 
         return profile;
     }
@@ -52,13 +55,30 @@ export class ProfileService {
             );
         }
 
-        dto.name ? profile.set('name', dto.name) : '';
-        dto.surname ? profile.set('surname', dto.surname) : '';
-        dto.middlename ? profile.set('middlename', dto.middlename) : '';
+        dto.name ? profile.name = dto.name : '';
+        dto.surname ? profile.surname = dto.surname : '';
+        dto.middlename ? profile.surname = dto.surname : '';
 
-        profile.save();
+        await profile.save();
 
         return profile;
+    }
+
+    async deleteById(id: number) {
+        const profile = await this.profilesRepository.findOne({
+            where: { id },
+        });
+
+        if(!profile) {
+            throw new HttpException(
+                'Пользователь не найден',
+                HttpStatus.NOT_FOUND,
+            );
+        }
+
+        profile.destroy();
+
+        return undefined;
     }
 
     async handleCreateUser(data: userData) {

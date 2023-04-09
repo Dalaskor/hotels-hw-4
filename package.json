@@ -20,6 +20,7 @@
     "test:e2e": "jest --config ./apps/hotels-hw-4/test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs-plus/rabbitmq": "^1.4.4",
     "@nestjs/common": "^9.0.0",
     "@nestjs/config": "^2.3.1",
     "@nestjs/core": "^9.0.0",
@@ -44,7 +45,7 @@
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
     "@nestjs/schematics": "^9.0.0",
-    "@nestjs/testing": "^9.0.0",
+    "@nestjs/testing": "^9.4.0",
     "@types/express": "^4.17.13",
     "@types/jest": "29.5.0",
     "@types/node": "18.15.11",
