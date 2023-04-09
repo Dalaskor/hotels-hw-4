@@ -32,7 +32,7 @@ import { PROFILES_SERVICE } from '../constants/services';
             inject: [ConfigService],
         }),
         RmqModule,
-        RmqModule.register({ name: PROFILES_SERVICE }),
+        RmqModule.register({ name: PROFILES_SERVICE}),
         UserModule,
     ],
     controllers: [AuthController],

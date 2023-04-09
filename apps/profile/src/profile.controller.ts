@@ -1,8 +1,8 @@
-import { RmqService } from '@app/common';
-import { Body, Controller, Get, Param, Put } from '@nestjs/common';
+import { JwtAuthGuard, RmqService } from '@app/common';
+import { Body, Controller, Get, Inject, Param, Put, UseGuards } from '@nestjs/common';
 import {
     Ctx,
-    MessagePattern,
+    EventPattern,
     Payload,
     RmqContext,
 } from '@nestjs/microservices';
@@ -21,11 +21,13 @@ export class ProfileController {
         return await this.profileService.getAll();
     }
 
+    @UseGuards(JwtAuthGuard)
     @Get('/:id')
     async getOneByUserId(@Param('id') id: number) {
         return await this.profileService.getOneByUserId(id);
     }
 
+    @UseGuards(JwtAuthGuard)
     @Put('/:user_id')
     async updateByUserId(
         @Param('user_id') userId: number,
@@ -34,8 +36,9 @@ export class ProfileController {
         return await this.profileService.updateByUserId(userId, dto);
     }
 
-    @MessagePattern('user-created')
+    @EventPattern('user-created')
     async handleUserCreated(@Payload() data: any, @Ctx() context: RmqContext) {
+        console.log('CHECK THIS PROFILE')
         await this.profileService.handleCreateUser(data);
         this.rmqService.ack(context);
     }

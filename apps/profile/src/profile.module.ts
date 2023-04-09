@@ -1,9 +1,9 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ProfileController } from './profile.controller';
 import { ProfileService } from './profile.service';
 import * as Joi from 'joi';
-import { DatabaseModule, RmqModule } from '@app/common';
+import { AuthModule, DatabaseModule, RmqModule } from '@app/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 import { Profile } from './profile.model';
 
@@ -19,7 +19,7 @@ import { Profile } from './profile.model';
             }),
             envFilePath: './apps/profile/.env',
         }),
-        RmqModule,
+        forwardRef(() => AuthModule),
         DatabaseModule,
         SequelizeModule.forFeature([Profile]),
     ],

@@ -1,9 +1,9 @@
 import {
-  CanActivate,
-  ExecutionContext,
-  Inject,
-  Injectable,
-  UnauthorizedException,
+    CanActivate,
+    ExecutionContext,
+    Inject,
+    Injectable,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, Observable, tap } from 'rxjs';
@@ -11,47 +11,35 @@ import { AUTH_SERVICE } from './service';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(@Inject(AUTH_SERVICE) private authClient: ClientProxy) {}
+    constructor(@Inject(AUTH_SERVICE) private authClient: ClientProxy) {}
 
-  canActivate(
-    context: ExecutionContext,
-  ): boolean | Promise<boolean> | Observable<boolean> {
-    const authentication = this.getAuthentication(context);
-    return this.authClient
-      .send('validate_user', {
-        Authentication: authentication,
-      })
-      .pipe(
-        tap((res) => {
-          this.addUser(res, context);
-        }),
-        catchError(() => {
-          throw new UnauthorizedException();
-        }),
-      );
-  }
+    canActivate(
+        context: ExecutionContext,
+    ): boolean | Promise<boolean> | Observable<boolean> {
+        try {
+            const req = context.switchToHttp().getRequest();
+            const authHeader = req.headers.authorization;
+            const bearer = authHeader.split(' ')[0];
+            const token = authHeader.split(' ')[1];
 
-  private getAuthentication(context: ExecutionContext) {
-    let authentication: string;
-    if (context.getType() === 'rpc') {
-      authentication = context.switchToRpc().getData().Authentication;
-    } else if (context.getType() === 'http') {
-      authentication = context.switchToHttp().getRequest()
-        .cookies?.Authentication;
-    }
-    if (!authentication) {
-      throw new UnauthorizedException(
-        'Не указаны данные для аутентификации',
-      );
-    }
-    return authentication;
-  }
+            if (bearer !== 'Bearer' || !token) {
+                throw new UnauthorizedException({
+                    message: 'Пользователь не авторизован',
+                });
+            }
 
-  private addUser(user: any, context: ExecutionContext) {
-    if (context.getType() === 'rpc') {
-      context.switchToRpc().getData().user = user;
-    } else if (context.getType() === 'http') {
-      context.switchToHttp().getRequest().user = user;
+            return this.authClient.send('validate_user', { token }).pipe(
+                tap((res) => {
+                    req.user = res;
+                }),
+                catchError(() => {
+                    throw new UnauthorizedException();
+                }),
+            );
+        } catch (e) {
+            throw new UnauthorizedException({
+                message: 'Пользователь не авторизован',
+            });
+        }
     }
-  }
 }
